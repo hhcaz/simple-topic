@@ -147,3 +147,6 @@ dmypy.json
 .pyre/
 .vscode
 .idea
+
+# project-wise
+tests/

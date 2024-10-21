@@ -1,10 +1,12 @@
-# Simple Topic
+# Pika Topic
 
-This is a toy implementation of topic (using [RabbitMQ](https://www.rabbitmq.com/)) as an alternative of ros's Publisher/Subscriber.
+This is a toy implementation of a topic-based pub/sub IPC (using [RabbitMQ](https://www.rabbitmq.com/)) as an alternative of [ROS](https://www.ros.org/)'s Publisher/Subscriber.
 
 ## Dependencies
 
 * rabbitmq-server
+  
+  You can skip this step if you want to only publish/subscribe to a topic host on a remote machine.
   ```bash
   sudo apt install erlang rabbitmq-server
   ```
@@ -28,10 +30,6 @@ This is a toy implementation of topic (using [RabbitMQ](https://www.rabbitmq.com
   ```
   sudo rabbitmq-plugins enable rabbitmq_management
   ```
-* Some rabbitmq utilities:
-  - list the existing exchanges: sudo rabbitmqctl list_exchanges
-  - list the existing queues: sudo rabbitmqctl list_queues
-
 
 ### 2. Example Publisher
 See `examples/demo_publisher.py`
@@ -107,8 +105,8 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
   ```
   >> python -m pika_topic.del -h
 
-  usage: del.py [-h] [-n NAME] [-u USER] [-v VHOST] [-y]
-                [-ms MANAGE_SERVER] [-ps PIKA_SERVER] [-a AUTH]
+  usage: del.py [-h] [-n NAME] [-u USER] [-v VHOST] [-y] [-ip IP]
+                [-mp MANAGE_PORT] [-pp PIKA_PORT] [-a AUTH]
 
   options:
     -h, --help            show this help message and exit
@@ -120,14 +118,15 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
                           re pattern to filter vhost of queried
                           exchanges
     -y, --yes             set true to skip the deletion confirm
-    -ms MANAGE_SERVER, --manage_server MANAGE_SERVER
-                          address of rabbitmq_management server,
-                          default is "localhost:15672"
-    -ps PIKA_SERVER, --pika_server PIKA_SERVER
-                          address of pika server, default is
-                          "localhost:5672"
+    -ip IP, --ip IP       address of server hosting rabbitmq-server
+                          and rabbitmq_management
+    -mp MANAGE_PORT, --manage_port MANAGE_PORT
+                          port of rabbitmq_management, default is
+                          15672
+    -pp PIKA_PORT, --pika_port PIKA_PORT
+                          address of pika server, default is 5672
     -a AUTH, --auth AUTH  auth to establish connection to host, format
-                          is username:passwd, default is "guest:guest"
+                          is username@passwd, default is guest@guest
   ```
   For example, we can delete the topic `demo_topic_0` allocated by previous publisher demo via:
   ```
@@ -145,7 +144,7 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
   >> python -m pika_topic.echo -h
 
   usage: echo.py [-h] [-n NAME] [-u USER] [-v VHOST] [-p PRECISION]
-                [-ms MANAGE_SERVER] [-ps PIKA_SERVER] [-a AUTH]
+                 [-ip IP] [-mp MANAGE_PORT] [-pp PIKA_PORT] [-a AUTH]
 
   options:
     -h, --help            show this help message and exit
@@ -159,14 +158,16 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
     -p PRECISION, --precision PRECISION
                           displayed precision of numpy arrays in
                           message, default is 3
-    -ms MANAGE_SERVER, --manage_server MANAGE_SERVER
-                          address of rabbitmq_management server,
-                          default is "localhost:15672"
-    -ps PIKA_SERVER, --pika_server PIKA_SERVER
-                          address of pika server, default is
-                          "localhost:5672"
+    -ip IP, --ip IP       address of server hosting rabbitmq-server
+                          and rabbitmq_management, default is
+                          localhost
+    -mp MANAGE_PORT, --manage_port MANAGE_PORT
+                          port of rabbitmq_management, default is
+                          15672
+    -pp PIKA_PORT, --pika_port PIKA_PORT
+                          address of pika server, default is 5672
     -a AUTH, --auth AUTH  auth to establish connection to host, format
-                          is username:passwd, default is "guest:guest"
+                          is username@passwd, default is guest@guest
   ```
   For example, we can show the message from topic `demo_topic_0` via:
   ```
@@ -190,7 +191,64 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
   ['frame 425756 of publisher 0:', array([0.299, 0.072, 0.664])]
   ```
 
+### 6. Publish/Subscribe to Remote Topics
+Suppose we have three machines:
+* A: ip = 192.168.3.5, runing a subscriber.
+* B: ip = 192.168.3.6, running a publisher.
+* C: ip = 192.168.3.7, running a rabbitmq-server on port 5672, and rabbitmq_management on port 15672. The user of machine C is `Cassie`, the rabbitmq-server runs with default user `guest`.
+
+B want to publish message to topic "demo_remote_topic", and A want to subscribe to topic "demo_remote_topic". 
+
+Using default `guest` user on C only accepts requests from C's `localhost`. To enable publishing/subscribing to remote topics, we could: 
+
+#### Option 1: Using SSH Local Port Forward
+* on machine A, we runs:
+  ```
+  ssh -fCNL 5672:localhost:5672 Cassie@192.168.3.7
+  ssh -fCNL 15672:localhost:15672 Cassie@192.168.3.7
+  ```
+* on machine B, we runs:
+  ```
+  ssh -fCNL 5672:localhost:5672 Cassie@192.168.3.7
+  ssh -fCNL 15672:localhost:15672 Cassie@192.168.3.7
+  ```
+Then we could run previous examples as usual, as the ssh would transmit the traffic to C's localhost which would be accepted by `guest` user.
+
+#### Option 2: Create a New User for RabbitMQ Server with Sufficient Permissions
+* First, we could create an example user named `Cindy` with password `demo_passwd` of C's rabbitmq-server, and allow `Cindy` to listen to all the IPs:
+  ```
+  sudo rabbitmqctl add_user Cindy demo_passwd
+  sudo rabbitmqctl set_permissions -p / Cindy ".*" ".*" ".*"
+  ```
+* When instantiating a Publisher/Subscriber on machine A or B, provide your credentials, for example:
+  ```python
+  import pika
+  from pika_topic import Publisher, SingleSubscriber
+
+  cred = pika.PlainCredentials("Cindy", "demo_passwd")
+  conn = pika.BlockingConnection(
+      pika.ConnectionParameters(
+          host="192.168.3.7", port=5672, credentials=cred
+      )
+  )
+
+  demo_publisher = Publisher("demo_remote_topic", conn)
+  demo_subscriber = SingleSubscriber(
+      "demo_remote_topic",
+      queue_size=1,
+      callback=lambda msg: print(msg),
+      conn=conn
+  )
+  ```
+* To use pika_topic.del and pika_topic.echo with new credentials, we can use:
+  ```
+  python -m pika_topic.del -n demo_remote_topic -ip 192.168.3.7 -a Cindy@demo_passwd
+  ```
+  ```
+  python -m pika_topic.echo -n demo_remote_topic -ip 192.168.3.7 -a Cindy@demo_passwd
+  ```
+
 # Caution
 * Codes not fully tested.
 * It uses pickle to serialize/deserialize data, therefore, it is NOT SAFE.
-* Currently only supports communication between pythons since it uses pickle. Maybe other data serialization/deserialization protocals would be added in the future.
+* Currently only supports communication between pythons since it uses pickle. Maybe other data serialization/deserialization protocols would be added in the future.

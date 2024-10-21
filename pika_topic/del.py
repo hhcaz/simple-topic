@@ -10,14 +10,15 @@ def parse_opt():
     parser.add_argument("-u", "--user", type=str, default="", help="re pattern to filter user of queried exchanges")
     parser.add_argument("-v", "--vhost", type=str, default="", help="re pattern to filter vhost of queried exchanges")
     parser.add_argument("-y", "--yes", action="store_true", default=False, help="set true to skip the deletion confirm")
-    parser.add_argument("-ms", "--manage_server", type=str, default="localhost:15672", 
-                        help="address of rabbitmq_management server, default is \"localhost:15672\"")
-    default_pika = ":".join([default_param.DEFAULT_HOST, str(default_param.DEFAULT_PORT)])
-    parser.add_argument("-ps", "--pika_server", type=str, default=default_pika, 
-                        help="address of pika server, default is \"{}\"".format(default_pika))
-    default_auth = ":".join([default_param.DEFAULT_USERNAME, default_param.DEFAULT_PASSWORD])
+    parser.add_argument("-ip", "--ip", type=str, default="localhost", 
+                        help="address of server hosting rabbitmq-server and rabbitmq_management")
+    parser.add_argument("-mp", "--manage_port", type=int, default=15672, 
+                        help="port of rabbitmq_management, default is 15672")
+    parser.add_argument("-pp", "--pika_port", type=int, default=default_param.DEFAULT_PORT, 
+                        help=f"address of pika server, default is {default_param.DEFAULT_PORT}")
+    default_auth = "@".join([default_param.DEFAULT_USERNAME, default_param.DEFAULT_PASSWORD])
     parser.add_argument("-a", "--auth", type=str, default=default_auth, 
-                        help="auth to establish connection to host, format is username:passwd, default is \"{}\"".format(default_auth))
+                        help=f"auth to establish connection to host, format is username@passwd, default is {default_auth}")
     opt = parser.parse_args()
     return opt
 
@@ -32,8 +33,10 @@ def main():
     if opt.vhost:
         filters.append(gen_vhost_filter(opt.vhost))
     
-    username, password = opt.auth.strip().split(":")
-    ret = fetch_all_exchanges(opt.manage_server.strip(), username, password)
+    ip = opt.ip
+    rabbitmq_port = opt.manage_port
+    username, password = opt.auth.strip().split("@")
+    ret = fetch_all_exchanges(":".join([ip, str(rabbitmq_port)]), username, password)
     matches = find_matches(filters, ret)
     
     if len(matches) == 0:
@@ -52,10 +55,10 @@ def main():
             return
 
     # delete matches
-    pika_ip, pika_port = opt.pika_server.strip().split(":")
+    pika_port = opt.pika_port
     cred = pika.PlainCredentials(username, password)
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host=pika_ip, port=int(pika_port), credentials=cred))
+        host=ip, port=pika_port, credentials=cred))
     channel = connection.channel()
     
     for m in matches:
