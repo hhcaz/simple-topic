@@ -87,7 +87,7 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
 
 ### 4. More Examples
 * See `examples/demo_subscriber_non_blocking.py` for running subscriber without spin and get latest data at any time you want.
-* See `examples/demo_subscriber_threading.py` for running subscriber's spin in background thread and fetch data in the main thread (not recommanded).
+* See `examples/demo_subscriber_threading.py` for running subscriber's spin in background thread and fetch data in the main thread (not recommended).
 
 
 ### 5. Some Utilities
