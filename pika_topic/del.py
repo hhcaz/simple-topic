@@ -15,7 +15,7 @@ def parse_opt():
     parser.add_argument("-mp", "--manage_port", type=int, default=15672, 
                         help="port of rabbitmq_management, default is 15672")
     parser.add_argument("-pp", "--pika_port", type=int, default=default_param.DEFAULT_PORT, 
-                        help=f"address of pika server, default is {default_param.DEFAULT_PORT}")
+                        help=f"address of rabbitmq-server, default is {default_param.DEFAULT_PORT}")
     default_auth = "@".join([default_param.DEFAULT_USERNAME, default_param.DEFAULT_PASSWORD])
     parser.add_argument("-a", "--auth", type=str, default=default_auth, 
                         help=f"auth to establish connection to host, format is username@passwd, default is {default_auth}")

@@ -120,7 +120,7 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
     -mp MANAGE_PORT, --manage_port MANAGE_PORT
                           port of rabbitmq_management, default is 15672
     -pp PIKA_PORT, --pika_port PIKA_PORT
-                          address of pika server, default is 5672
+                          address of rabbitmq-server, default is 5672
     -a AUTH, --auth AUTH  auth to establish connection to host, format is
                           username@passwd, default is guest@guest
   ```
@@ -159,7 +159,7 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
     -mp MANAGE_PORT, --manage_port MANAGE_PORT
                           port of rabbitmq_management, default is 15672
     -pp PIKA_PORT, --pika_port PIKA_PORT
-                          address of pika server, default is 5672
+                          address of rabbitmq-server, default is 5672
     -a AUTH, --auth AUTH  auth to establish connection to host, format is
                           username@passwd, default is guest@guest
   ```
@@ -191,22 +191,22 @@ Suppose we have three machines:
 * B: ip = 192.168.3.6, running a publisher.
 * C: ip = 192.168.3.7, running a rabbitmq-server on port 5672, and rabbitmq_management on port 15672. The user of machine C is `Cassie`, the rabbitmq-server runs with default user `guest`.
 
-B want to publish message to topic "demo_remote_topic", and A want to subscribe to topic "demo_remote_topic". 
+B wants to publish message to topic "demo_remote_topic", and A wants to subscribe the topic "demo_remote_topic". 
 
 Using default `guest` user on C only accepts requests from C's `localhost`. To enable publishing/subscribing to remote topics, we could: 
 
 #### Option 1: Using SSH Local Port Forward
-* on machine A, we runs:
+* on machine A, run:
   ```
   ssh -fCNL 5672:localhost:5672 Cassie@192.168.3.7
   ssh -fCNL 15672:localhost:15672 Cassie@192.168.3.7
   ```
-* on machine B, we runs:
+* on machine B, run:
   ```
   ssh -fCNL 5672:localhost:5672 Cassie@192.168.3.7
   ssh -fCNL 15672:localhost:15672 Cassie@192.168.3.7
   ```
-Then we could run previous examples as usual, as the ssh would transmit the traffic to C's localhost which would be accepted by `guest` user.
+Then we could run previous examples as usual, as the ssh would transmit the traffic to C's localhost which could be accepted by `guest` user.
 
 #### Option 2: Create a New User for RabbitMQ Server with Sufficient Permissions
 * First, we could create an example user named `Cindy` with password `demo_passwd` of C's rabbitmq-server, and allow `Cindy` to listen to all the IPs:
