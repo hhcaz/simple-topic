@@ -57,7 +57,7 @@ The above script uses two publisher to publish random numpy arrays at the rate a
 
 
 ### 3. Example Subscriber
-See `examples/demo_subscriber_blocking`
+See `examples/demo_subscriber_blocking.py`
 ```python
 from pika_topic import Subscriber
 
@@ -110,23 +110,19 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
 
   options:
     -h, --help            show this help message and exit
-    -n NAME, --name NAME  re pattern to filter name of queried
-                          exchanges
-    -u USER, --user USER  re pattern to filter user of queried
-                          exchanges
+    -n NAME, --name NAME  re pattern to filter name of queried exchanges
+    -u USER, --user USER  re pattern to filter user of queried exchanges
     -v VHOST, --vhost VHOST
-                          re pattern to filter vhost of queried
-                          exchanges
+                          re pattern to filter vhost of queried exchanges
     -y, --yes             set true to skip the deletion confirm
-    -ip IP, --ip IP       address of server hosting rabbitmq-server
-                          and rabbitmq_management
+    -ip IP, --ip IP       address of server hosting rabbitmq-server and
+                          rabbitmq_management
     -mp MANAGE_PORT, --manage_port MANAGE_PORT
-                          port of rabbitmq_management, default is
-                          15672
+                          port of rabbitmq_management, default is 15672
     -pp PIKA_PORT, --pika_port PIKA_PORT
                           address of pika server, default is 5672
-    -a AUTH, --auth AUTH  auth to establish connection to host, format
-                          is username@passwd, default is guest@guest
+    -a AUTH, --auth AUTH  auth to establish connection to host, format is
+                          username@passwd, default is guest@guest
   ```
   For example, we can delete the topic `demo_topic_0` allocated by previous publisher demo via:
   ```
@@ -146,28 +142,26 @@ The above script registers two callbacks on topic `demo_topic_0` and one callbac
   usage: echo.py [-h] [-n NAME] [-u USER] [-v VHOST] [-p PRECISION]
                  [-ip IP] [-mp MANAGE_PORT] [-pp PIKA_PORT] [-a AUTH]
 
+  usage: echo.py [-h] [-n NAME] [-u USER] [-v VHOST] [-p PRECISION]
+                 [-ip IP] [-mp MANAGE_PORT] [-pp PIKA_PORT] [-a AUTH]
+
   options:
     -h, --help            show this help message and exit
-    -n NAME, --name NAME  re pattern to filter name of queried
-                          exchanges
-    -u USER, --user USER  re pattern to filter user of queried
-                          exchanges
+    -n NAME, --name NAME  re pattern to filter name of queried exchanges
+    -u USER, --user USER  re pattern to filter user of queried exchanges
     -v VHOST, --vhost VHOST
-                          re pattern to filter vhost of queried
-                          exchanges
+                          re pattern to filter vhost of queried exchanges
     -p PRECISION, --precision PRECISION
-                          displayed precision of numpy arrays in
-                          message, default is 3
-    -ip IP, --ip IP       address of server hosting rabbitmq-server
-                          and rabbitmq_management, default is
-                          localhost
+                          displayed precision of numpy arrays in message,
+                          default is 3
+    -ip IP, --ip IP       address of server hosting rabbitmq-server and
+                          rabbitmq_management, default is localhost
     -mp MANAGE_PORT, --manage_port MANAGE_PORT
-                          port of rabbitmq_management, default is
-                          15672
+                          port of rabbitmq_management, default is 15672
     -pp PIKA_PORT, --pika_port PIKA_PORT
                           address of pika server, default is 5672
-    -a AUTH, --auth AUTH  auth to establish connection to host, format
-                          is username@passwd, default is guest@guest
+    -a AUTH, --auth AUTH  auth to establish connection to host, format is
+                          username@passwd, default is guest@guest
   ```
   For example, we can show the message from topic `demo_topic_0` via:
   ```
