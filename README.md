@@ -209,10 +209,11 @@ Using default `guest` user on C only accepts requests from C's `localhost`. To e
 Then we could run previous examples as usual, as the ssh would transmit the traffic to C's localhost which could be accepted by `guest` user.
 
 #### Option 2: Create a New User for RabbitMQ Server with Sufficient Permissions
-* First, we could create an example user named `Cindy` with password `demo_passwd` of C's rabbitmq-server, and allow `Cindy` to listen to all the IPs:
+* First, we could create an example user named `Cindy` with password `demo_passwd` of C's rabbitmq-server, allow `Cindy` to listen to all the IPs, and add `Cindy` to the management:
   ```
   sudo rabbitmqctl add_user Cindy demo_passwd
   sudo rabbitmqctl set_permissions -p / Cindy ".*" ".*" ".*"
+  sudo rabbitmqctl set_user_tags Cindy management
   ```
 * When instantiating a Publisher/Subscriber on machine A or B, provide your credentials, for example:
   ```python
