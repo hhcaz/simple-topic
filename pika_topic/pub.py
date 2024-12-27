@@ -1,5 +1,7 @@
 import pika
 import pickle
+import traceback
+import pika.exceptions
 
 
 class Publisher(object):
@@ -9,11 +11,26 @@ class Publisher(object):
         self.channel = self.connection.channel()
         self.channel.exchange_declare(topic, exchange_type="fanout", auto_delete=False)
 
+    def reconnect(self):
+        self.channel.close()
+        self.channel = self.connection.channel()
+        self.channel.exchange_declare(self.topic, exchange_type="fanout", auto_delete=False)
+
     def publish(self, obj):
         bdata = pickle.dumps(obj)
-        self.channel.basic_publish(
-            exchange=self.topic,
-            routing_key="",
-            body=bdata
-        )
+        try:
+            self.channel.basic_publish(
+                exchange=self.topic,
+                routing_key="",
+                body=bdata
+            )
+        except pika.exceptions.StreamLostError as e:
+            traceback.print_exc()
+            print("[INFO] Try reconnect.")
+            self.reconnect()
+            self.channel.basic_publish(
+                exchange=self.topic,
+                routing_key="",
+                body=bdata
+            )
 
